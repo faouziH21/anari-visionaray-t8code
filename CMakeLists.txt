@@ -21,7 +21,7 @@ add_subdirectory(external)
 # note: we're often tracking the most recent changes from ANARI-SDK
 # (on branch "next_release")
 find_package(anari 0.15.0 REQUIRED)
-find_package(visionaray 0.6.1 REQUIRED)
+find_package(visionaray REQUIRED)
 
 option(ANARI_VISIONARAY_ENABLE_CUDA "Compile the CUDA device" OFF)
 set(cuda ${ANARI_VISIONARAY_ENABLE_CUDA})
@@ -39,6 +39,10 @@ endif()
 
 option(ANARI_VISIONARAY_ENABLE_NANOVDB "Enable NanoVDB spatial field type" ON)
 set(nanovdb ${ANARI_VISIONARAY_ENABLE_NANOVDB})
+
+
+option(ANARI_VISIONARAY_ENABLE_T8CODE "Enable T8code spatial field type" OFF)
+set(t8code ${ANARI_VISIONARAY_ENABLE_T8CODE})
 
 add_library(${PROJECT_NAME} SHARED)
 anari_generate_queries(
@@ -137,7 +141,13 @@ if (nanovdb)
   target_link_libraries(${PROJECT_NAME} PRIVATE
     $<BUILD_INTERFACE:vsnray_nanovdb>)
 endif()
-
+if (t8code)
+  find_package(T8CODE)
+  target_link_libraries(${PROJECT_NAME} PUBLIC T8CODE::T8)
+  target_compile_definitions(${PROJECT_NAME} PRIVATE WITH_T8CODE=1)
+  # target_link_libraries(${PROJECT_NAME} PRIVATE
+  #   $<BUILD_INTERFACE:vsnray_t8code>)
+  endif()
 include(GenerateExportHeader)
 generate_export_header(${PROJECT_NAME}
   EXPORT_MACRO_NAME "VISIONARAY_DEVICE_INTERFACE"

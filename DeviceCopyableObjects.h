@@ -47,6 +47,10 @@ using hip_index_bvh     = index_bvh_t<hip::device_vector<P>, hip::device_vector<
 #include <nanovdb/math/SampleFromVoxels.h>
 #endif
 
+#ifdef WITH_T8CODE
+#include<t8.h>
+#include <t8_forest/t8_forest_general.h>
+#endif
 namespace visionaray {
 
 namespace dco {
@@ -379,7 +383,7 @@ inline GridAccel createGridAccel()
 
 struct SpatialField
 {
-  enum Type { StructuredRegular, Unstructured, BlockStructured, NanoVDB, Unknown, };
+  enum Type { StructuredRegular, Unstructured, BlockStructured, NanoVDB, T8code, Unknown};
   Type type;
   unsigned fieldID;
   float cellSize;
@@ -450,6 +454,14 @@ struct SpatialField
       nanovdb::NanoGrid<float> *grid;
       tex_filter_mode filterMode;
     } asNanoVDB;
+#endif
+#ifdef WITH_T8CODE
+    struct {
+      t8_cmesh_t cmesh;
+      t8_locidx_t local_num_elements;
+      t8_gloidx_t global_num_elements;
+      t8_locidx_t num_elements;
+    } asT8code;
 #endif
   };
 };
@@ -557,6 +569,13 @@ inline bool sampleField(const SpatialField &sf, vec3 P, float &value, int &primI
       return true;
     }
   }
+#endif
+#ifdef WITH_T8CODE
+  else if (sf.type == SpatialField::T8code) {
+    // give the forest
+    // search the forest for the values of vector P
+    //set it as a value
+
 #endif
 
   return false;
