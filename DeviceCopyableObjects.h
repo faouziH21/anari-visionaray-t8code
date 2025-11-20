@@ -17,6 +17,7 @@
 #include "scene/volume/spatial_field/Plane.h"
 #include "scene/volume/spatial_field/UElems.h"
 #include "scene/volume/spatial_field/UElemGrid.h"
+#include "scene/volume/spatial_field/T8codePointSearch.h"
 #include "common.h"
 #include "sampleCDF.h"
 
@@ -569,7 +570,7 @@ inline bool sampleField(const SpatialField &sf, vec3 P, float &value, int &primI
 #endif
 #ifdef WITH_T8CODE
   else if (sf.type == SpatialField::T8code) {
-    t8_forest_t forest = sf.asT8code.forest;
+    forest = sf.asT8code.forest;
     value = search_single_point(forest, (double) P.x, (double) P.y, (double) P.z);
     primID = 0;
     return true;
