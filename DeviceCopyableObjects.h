@@ -48,7 +48,7 @@ using hip_index_bvh     = index_bvh_t<hip::device_vector<P>, hip::device_vector<
 #endif
 
 #ifdef WITH_T8CODE
-#include<t8.h>
+#include <t8.h>
 #include <t8_forest/t8_forest_general.h>
 #endif
 namespace visionaray {
@@ -457,10 +457,7 @@ struct SpatialField
 #endif
 #ifdef WITH_T8CODE
     struct {
-      t8_cmesh_t cmesh;
-      t8_locidx_t local_num_elements;
-      t8_gloidx_t global_num_elements;
-      t8_locidx_t num_elements;
+      t8_forest_t forest;
     } asT8code;
 #endif
   };
@@ -572,10 +569,11 @@ inline bool sampleField(const SpatialField &sf, vec3 P, float &value, int &primI
 #endif
 #ifdef WITH_T8CODE
   else if (sf.type == SpatialField::T8code) {
-    // give the forest
-    // search the forest for the values of vector P
-    //set it as a value
-
+    t8_forest_t forest = sf.asT8code.forest;
+    value = search_single_point(forest, (double) P.x, (double) P.y, (double) P.z);
+    primID = 0;
+    return true;
+  }
 #endif
 
   return false;
