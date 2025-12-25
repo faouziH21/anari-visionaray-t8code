@@ -9,7 +9,9 @@
 #ifdef WITH_NANOVDB
 #include "NanoVDBField.h"
 #endif
-
+#ifdef WITH_T8CODE
+#include "T8CodeField.h"
+#endif
 namespace visionaray {
 
 SpatialField::SpatialField(VisionarayGlobalState *s)
@@ -37,6 +39,10 @@ SpatialField *SpatialField::createInstance(
 #ifdef WITH_NANOVDB
   else if (subtype == "nanovdb" || subtype == "vdb")
     return new NanoVDBField(s);
+#endif
+#ifdef WITH_T8CODE
+  else if (subtype == "t8code")
+    return new T8codeField(s);
 #endif
   else
     return (SpatialField *)new UnknownObject(ANARI_SPATIAL_FIELD, s);

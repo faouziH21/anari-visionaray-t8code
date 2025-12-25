@@ -17,7 +17,6 @@
 #include "scene/volume/spatial_field/Plane.h"
 #include "scene/volume/spatial_field/UElems.h"
 #include "scene/volume/spatial_field/UElemGrid.h"
-#include "scene/volume/spatial_field/T8codePointSearch.h"
 #include "common.h"
 #include "sampleCDF.h"
 
@@ -49,8 +48,7 @@ using hip_index_bvh     = index_bvh_t<hip::device_vector<P>, hip::device_vector<
 #endif
 
 #ifdef WITH_T8CODE
-#include <t8.h>
-#include <t8_forest/t8_forest_general.h>
+#include "scene/volume/spatial_field/T8CodePointSearch.h"
 #endif
 namespace visionaray {
 
@@ -296,7 +294,7 @@ inline hit_record<Ray, primitive<unsigned>> intersect(
       }
     }
   }
-    
+
   if (idx_hi.z < blockSize.z) {
     if (idx_lo.y >= 0 && idx_lo.y < blockSize.y) {
       if (idx_lo.x >= 0 && idx_lo.x < blockSize.x) {
@@ -384,7 +382,7 @@ inline GridAccel createGridAccel()
 
 struct SpatialField
 {
-  enum Type { StructuredRegular, Unstructured, BlockStructured, NanoVDB, T8code, Unknown};
+  enum Type { StructuredRegular, Unstructured, BlockStructured, NanoVDB, T8Code, Unknown};
   Type type;
   unsigned fieldID;
   float cellSize;
@@ -459,6 +457,7 @@ struct SpatialField
 #ifdef WITH_T8CODE
     struct {
       t8_forest_t forest;
+      sc_array_t *element_data;
     } asT8code;
 #endif
   };
@@ -569,10 +568,13 @@ inline bool sampleField(const SpatialField &sf, vec3 P, float &value, int &primI
   }
 #endif
 #ifdef WITH_T8CODE
-  else if (sf.type == SpatialField::T8code) {
-    forest = sf.asT8code.forest;
-    value = search_single_point(forest, (double) P.x, (double) P.y, (double) P.z);
-    primID = 0;
+  else if (sf.type == SpatialField::T8Code){
+    //Using floats for optimization
+    primID = search_single_point(sf.asT8code.forest, (double) P.x, (double) P.y, (double) P.z);
+    if(primID == -1){
+      return false;
+    }
+    get_element_value(sf.asT8code.element_data, primID, value);
     return true;
   }
 #endif

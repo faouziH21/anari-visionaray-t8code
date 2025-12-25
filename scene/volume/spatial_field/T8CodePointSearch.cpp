@@ -5,6 +5,18 @@
 #include <t8_forest/t8_forest_general.h>        /* forest definition and basic interface. */
 #include <t8_forest/t8_forest_io.h>             /* save forest */
 #include <t8_schemes/t8_default/t8_default.hxx> /* default refinement scheme. */
+#include <t8_forest/t8_forest_iterate.h>
+
+typedef struct {
+  double point[3];
+  t8_locidx_t result;
+  int found;
+} point_query_t;
+
+struct element_data_storage {
+  /* Storage for our element values. */
+  double values;
+};
 
 static void point_query_fn(
     t8_forest_t forest,
@@ -34,31 +46,25 @@ point_search_fn(t8_forest_t forest,
   /* We assume only one point query */
   // point_query_t *q = (point_query_t*) sc_array_index_int(queries, 0);
 
+  int inside = 0;
+  double coords[3] = { q->point[0], q->point[1], q->point[2] };
+  t8_forest_element_points_inside(forest, ltreeid, element,
+                                  coords, 1, &inside, 1e-8);
   if (q->found) {
     return 0;  /* Already found — skip work */
   }
   t8_cmesh_t cmesh = t8_forest_get_cmesh(forest);
   t8_eclass_t tree_class = t8_cmesh_get_tree_class(cmesh, ltreeid);
   const t8_scheme_c* scheme = t8_forest_get_scheme(forest);
-  double coords[3] = { q->point[0], q->point[1], q->point[2] };
-  int inside = 0;
   int level = t8_element_get_level(scheme, tree_class, element);
   /* Test if the point is inside this element */
   t8_locidx_t element_index = t8_forest_get_tree_element_offset (forest, ltreeid) + tree_leaf_index;
-  t8_forest_element_points_inside(forest, ltreeid, element,
-                                  coords, 1, &inside, 1e-8);
-  if (inside) {
-    if(is_leaf){
-        std::cout << "ni hao " << std::endl;
+  if (inside && is_leaf) {
         q->result = t8_forest_get_tree_element_offset(forest, ltreeid) + tree_leaf_index;
         q->found = 1;
         return 0;
-    } else {
-        return 1;
     }
-  }
-
-  return 0;
+  return 1;
 }
 t8_locidx_t
 search_single_point(t8_forest_t forest, double x, double y, double z)
@@ -74,7 +80,7 @@ search_single_point(t8_forest_t forest, double x, double y, double z)
   /* Run search */
   t8_forest_search(forest,
                    point_search_fn,
-                   point_query_fn,
+                   NULL,
                    NULL);
 
   /* Read result */
@@ -82,6 +88,17 @@ search_single_point(t8_forest_t forest, double x, double y, double z)
   if (q.found) {
     result = q.result;
   }
-
   return result;
+}
+
+bool get_element_value(sc_array_t *element_data, t8_locidx_t ielement, float &value_holder)
+{
+    if(element_data == NULL) {
+      std::cout <<"element data is null";
+      return false;
+    }
+    auto theArray = *((element_data_storage *) t8_sc_array_index_locidx(element_data, ielement));
+
+    value_holder =(float) theArray.values;
+    return true;
 }

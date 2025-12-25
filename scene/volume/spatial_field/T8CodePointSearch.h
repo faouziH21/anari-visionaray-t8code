@@ -12,6 +12,10 @@ typedef struct {
     int found;           /**< Whether the element was found */
 } point_query_t;
 
+struct element_data_storage {
+  /* Storage for our element values. */
+  double values;
+};
 int point_search_fn(t8_forest_t forest,
                     t8_locidx_t ltreeid,
                     const t8_element_t *element,
@@ -33,4 +37,5 @@ void point_query_fn(t8_forest_t forest,
 t8_locidx_t search_single_point(t8_forest_t forest,
                                 double x, double y, double z);
 
+double get_element_value(sc_array_t *element_data, t8_locidx_t ielement, float &value_holder);
 

@@ -16,9 +16,8 @@ namespace visionaray {
 
 struct T8CodeField : public SpatialField
 {
-  T8CodeField(VisionarayGlobalState *d, t8_forest_t forest);
+  T8CodeField(VisionarayGlobalState *d);
   ~T8CodeField();
-
   void commitParameters() override;
   void finalize() override;
 
@@ -26,14 +25,11 @@ struct T8CodeField : public SpatialField
 
   aabb bounds() const override; //get bounds through t8code
 
-  void buildGrid() override;
- private:
-
-  std::string m_filter;
-  double *t8_element_data;
-  t8_geometry_type_t geometry;
-  t8_cmesh_t cmesh = t8_forest_get_cmesh(forest);
-#endif
+  void setForest (t8_forest_t forest);
+  t8_forest_t returnForest();
+  private:
+   sc_array_t *t8_element_data = NULL;
+   t8_forest_t t8_forest = NULL;
 };
 
 } // namespace visionaray
